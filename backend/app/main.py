@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from .auth import router as auth_router
-from .listings import router as listings_router
+from app import models
+from app import auth
+
+models.Base.metadata.create_all(bind=models.engine)
 
 app = FastAPI()
-
-app.include_router(auth_router, prefix="/auth")
-app.include_router(listings_router, prefix="/listings")
+app.include_router(auth.router, prefix="/auth")
 
 @app.get("/")
 def root():

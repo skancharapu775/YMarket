@@ -7,12 +7,14 @@ import {Routes, Route} from 'react-router-dom';
 import ListingsPage from './pages/ListingsPage.jsx'
 import ListingDetail from './pages/ListingDetail.jsx'
 import LoginPage from './pages/LoginPage';
+import PostListingPage from './pages/PostListing.jsx'
 
 function App() {
   return (
     <div className='pt-18'>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/post" element={<PostListingPage/>}></Route>
         <Route path="/listing" element={<ListingsPage/>}></Route>
         <Route path="/listing/:id" element={<ListingDetail />} />
       </Routes>

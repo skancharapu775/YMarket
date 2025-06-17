@@ -22,11 +22,15 @@ const Listing = ({item}) => {
 
         {/* AI Price Summary */}
         <div className="flex flex-col items-end ml-4 min-w-[120px] text-right">
-          <p className="font-bold text-lg text-success">${item.askingPrice}</p>
-          <div className="badge badge-info mt-1">
-            Est. ${item.aiLow} – ${item.aiHigh}
-          </div>
-          <p className="text-xs text-base-content/60 mt-1">AI estimate</p>
+          <p className="font-bold text-lg text-success">${item.asking_price}</p>
+          {item.aiLow != null && item.aiHigh != null ? (
+            <div className="badge badge-info mt-1">
+              Est. ${item.aiLow} – ${item.aiHigh}
+            </div>
+          ) : (
+            <div className="badge badge-info mt-1">Est. N/A</div>
+          )}
+          <p className="text-xs text-base-content/70 mt-1">AI estimate</p>
         </div>
       </div>
     </div>

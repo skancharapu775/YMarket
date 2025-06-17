@@ -13,6 +13,7 @@ function App() {
   return (
     <div className='pt-18'>
       <Routes>
+        <Route path="/" element={<ListingsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/post" element={<PostListingPage/>}></Route>
         <Route path="/listing" element={<ListingsPage/>}></Route>

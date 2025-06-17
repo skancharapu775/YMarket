@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from 'react'
 import Listing from "../components/Listing";
 import { ChevronDown } from "lucide-react";
@@ -26,7 +26,13 @@ const ListingsPage = () => {
         aiLow: 35,
         aiHigh: 45
       };
-    const mockListings = [mockItem, mockItem1]
+    const [listings, setListings] = useState([]);
+    useEffect(() => {
+        fetch("http://localhost:8000/listings/get")
+          .then((res) => res.json())
+          .then((data) => setListings(data))
+          .catch((err) => console.error("Failed to fetch listings", err));
+    }, []);
 
     return (
       <div className="min-h-screen bg-base-200 py-6 px-4">
@@ -55,7 +61,7 @@ const ListingsPage = () => {
   
           {/* Listings */}
           <div className="bg-base-100 rounded-xl shadow-md px-8 py-5 space-y-10 w-full border border-base-300">
-            {mockListings.map((item, i) => (
+            {listings.map((item, i) => (
                 <Listing item={item} key={i} />
             ))}
           </div>

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app import models
 from app import auth
+from app import listings
 
 models.Base.metadata.create_all(bind=models.engine)
 
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth.router, prefix="/auth")
+app.include_router(listings.router, prefix="/listings")
 
 @app.get("/")
 def root():

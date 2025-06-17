@@ -18,14 +18,30 @@ function Navbar() {
                   <h1 className="text-lg font-bold">yMarkets</h1>
                 </Link>
               </div>
-    
-              {/* Right Side: Links */}
-              <div className="flex items-center gap-3">
+
+              {/* Center: Navigation Buttons */}
+              <div className="flex items-center gap-4">
                 <Link
                     to="/"
-                    className="btn btn-sm btn-outline text-blue-700 normal-case"
+                    className="btn btn-sm btn-outline normal-case"
                   >
-                    Sell an item
+                    Items
+                </Link>
+                <Link
+                    to="/dashboard"
+                    className="btn btn-sm btn-outline normal-case"
+                  >
+                    Seller Dashboard
+                </Link>
+              </div>
+
+              {/* Right Side: Login Button */}
+              <div className="flex items-center gap-3">
+                <Link
+                    to="/login"
+                    className="btn btn-sm btn-primary normal-case"
+                  >
+                    Login
                 </Link>
               </div>
             </div>

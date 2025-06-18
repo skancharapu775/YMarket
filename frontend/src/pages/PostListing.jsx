@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
 const PostListingPage = () => {
@@ -9,8 +9,6 @@ const PostListingPage = () => {
   const [isGeneratingPrice, setIsGeneratingPrice] = useState(false);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
-
   const handleGeneratePrice = async () => {
     if (!title.trim() || !description.trim()) {
       alert("Please fill in both title and description before generating a price.");
@@ -19,7 +17,7 @@ const PostListingPage = () => {
 
     setIsGeneratingPrice(true);
     try {
-      const response = await axios.post("http://localhost:8000/listings/generate_price", {
+      const response = await api.post("/listings/generate_price", {
         title: title,
         description: description,
       });
@@ -39,20 +37,16 @@ const PostListingPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8000/listings/submit", {
+      await api.post("/listings/submit", {
         title,
         asking_price: parseFloat(askingPrice),
         description,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       });
       alert("Listing posted!");
       navigate("/listings");
     } catch (err) {
-      alert("You must be logged in to post.");
-      navigate("/login");
+      console.error("Error posting listing:", err);
+      alert("Failed to post listing. Please try again.");
     }
   };
 

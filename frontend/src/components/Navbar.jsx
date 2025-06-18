@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Store, CircleUser } from 'lucide-react';
+import { Store, CircleUser, LogOut } from 'lucide-react';
 import { useState, useEffect } from "react";
 
 function Navbar() {
@@ -15,6 +15,12 @@ function Navbar() {
         
           return () => clearInterval(interval); // cleanup on unmount
     }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    };
+
     return (
         <header
           className="border-b border-base-300 fixed w-full top-0 z-50  h-19
@@ -58,13 +64,22 @@ function Navbar() {
                         Login
                     </Link>
                 ) : (
-                    <Link
-                    to="/seller-dashboard"
-                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
-                    >
-                        <CircleUser className="w-6 h-6 text-blue-700" />
-                        Your Dashboard
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                        to="/seller-dashboard"
+                        className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                        >
+                            <CircleUser className="w-6 h-6 text-blue-700" />
+                            Your Dashboard
+                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
+                    </div>
                 )}
               </div>
             </div>

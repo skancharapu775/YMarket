@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import React from 'react'
 import Listing from "../components/Listing";
 import { ChevronDown } from "lucide-react";
+import api from '../utils/api';
 
 const ListingsPage = () => {
     const [search, setSearch] = useState("");
@@ -28,9 +29,8 @@ const ListingsPage = () => {
       };
     const [listings, setListings] = useState([]);
     useEffect(() => {
-        fetch("http://localhost:8000/listings/get")
-          .then((res) => res.json())
-          .then((data) => setListings(data))
+        api.get("/listings/get")
+          .then((res) => setListings(res.data))
           .catch((err) => console.error("Failed to fetch listings", err));
     }, []);
 

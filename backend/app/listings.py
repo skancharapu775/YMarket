@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import models, auth, schemas
 from typing import List
@@ -12,6 +12,13 @@ router = APIRouter()
 @router.get("/get", response_model=List[schemas.ListingOut])
 def get_listings(db: Session = Depends(auth.get_db)):
     return db.query(models.Listing).filter(models.Listing.sold == False).all()
+
+@router.get("/{listing_id}", response_model=schemas.ListingOut)
+def get_listing(listing_id: int, db: Session = Depends(auth.get_db)):
+    listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return listing
 
 @router.get("/my-unsold", response_model=List[schemas.ListingOut], )
 def get_my_unsold_listings(db: Session = Depends(auth.get_db), current_user: models.User = Depends(auth.get_current_user)):

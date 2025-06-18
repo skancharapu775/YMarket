@@ -11,11 +11,17 @@ router = APIRouter()
 
 @router.get("/get", response_model=List[schemas.ListingOut])
 def get_listings(db: Session = Depends(auth.get_db)):
-    return db.query(models.Listing).all()
+    return db.query(models.Listing).filter(models.Listing.sold == False).all()
+
+@router.get("/my-unsold", response_model=List[schemas.ListingOut], )
+def get_my_unsold_listings(db: Session = Depends(auth.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return db.query(models.Listing).filter(
+        models.Listing.owner_id == current_user.id,
+        models.Listing.sold == False).all()
+
 
 @router.post("/submit")
 def create_listing(data: schemas.ListingCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
-
     try:
         ai_input = schemas.PriceGenerationRequest(title=data.title, description=data.description)
         result = generate_price(ai_input)

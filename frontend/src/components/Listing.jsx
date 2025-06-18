@@ -3,7 +3,7 @@ import React from 'react'
 
 const Listing = ({item}) => {
   return (
-    <div className="card card-side bg-base-300 shadow-md my-6 px-3 rounded-2xl">
+    <div className="card card-side bg-base-300 shadow-sm my-6 px-3 rounded-2xl hover:shadow-lg transition-all duration-200">
       {/* Image */}
       <figure className="w-32 h-32 overflow-hidden">
         {item.image 
@@ -19,7 +19,7 @@ const Listing = ({item}) => {
         {/* Description */}
         <div className="flex flex-col justify-between flex-grow">
           <div>
-            <h2 className="text-lg font-bold hover:text-blue-500 cursor-pointer transition-colors duration-100">{item.title}</h2>
+            <h2 className="text-xl font-bold hover:text-blue-500 cursor-pointer transition-colors duration-100">{item.title}</h2>
             <p className="text-sm text-base-content/70">{item.condition} · {item.category}</p>
             <p className="text-sm mt-1 line-clamp-2">{item.description}</p>
           </div>

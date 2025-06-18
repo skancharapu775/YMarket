@@ -1,5 +1,5 @@
 # app/models.py
-from sqlalchemy import Column, Integer, String, create_engine, Float, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, create_engine, Float, ForeignKey, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 DATABASE_URL = "sqlite:///./test.db"  # change to postgres later
@@ -29,6 +29,7 @@ class Listing(Base):
     asking_price = Column(Float)
     ai_low = Column(Float)
     ai_high = Column(Float)
+    sold = Column(Boolean, default=False)
 
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", backref="listings")

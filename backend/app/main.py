@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import models
 from app import auth
 from app import listings
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 models.Base.metadata.create_all(bind=models.engine)
 

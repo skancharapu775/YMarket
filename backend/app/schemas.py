@@ -14,6 +14,7 @@ class ListingOut(BaseModel):
     asking_price: float
     ai_low: Optional[float]
     ai_high: Optional[float]
+    sold: bool
 
 class PriceGenerationRequest(BaseModel):
     title: str

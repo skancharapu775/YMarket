@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import axios from 'axios';
 import GoogleLoginButton from '../components/GoogleLoginButton';
+import {useNavigate} from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,6 +18,7 @@ const LoginPage = () => {
         password
       });
       localStorage.setItem("token", res.data.access_token);
+      navigate("/");
       alert("Logged in!");
     } catch (err) {
       console.error(err);

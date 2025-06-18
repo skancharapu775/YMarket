@@ -2,17 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app import models, auth, schemas
 from typing import List
-from pydantic import BaseModel
 from openai import OpenAI
 import os
 
 
 router = APIRouter()
-
-
-class PriceGenerationRequest(BaseModel):
-    title: str
-    description: str
 
 
 @router.get("/get", response_model=List[schemas.ListingOut])
@@ -21,11 +15,26 @@ def get_listings(db: Session = Depends(auth.get_db)):
 
 @router.post("/submit")
 def create_listing(data: schemas.ListingCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+
+    try:
+        ai_input = schemas.PriceGenerationRequest(title=data.title, description=data.description)
+        result = generate_price(ai_input)
+        price = result["suggested_price"]
+        spread = 5/100 * price
+        ai_low = max(price - spread, 0)
+        ai_high = price + spread
+    except Exception as e:
+        print(f"AI pricing failed: {e}")
+        ai_low = None
+        ai_high = None
+
     listing = models.Listing(
         title=data.title,
         description=data.description,
         asking_price=data.asking_price,
         owner_id=current_user.id,
+        ai_low=ai_low,
+        ai_high=ai_high
     )
     db.add(listing)
     db.commit()
@@ -33,7 +42,7 @@ def create_listing(data: schemas.ListingCreate, current_user: models.User = Depe
     return listing
 
 @router.post("/generate_price")
-def generate_price(data: PriceGenerationRequest):
+def generate_price(data: schemas.PriceGenerationRequest):
     try:
         # Get API key from environment variable
         api_key = os.getenv("OPENAI_API_KEY")
@@ -80,13 +89,13 @@ def generate_price(data: PriceGenerationRequest):
         # Round to nearest dollar
         suggested_price = round(suggested_price)
         
-        return {"suggested_price": suggested_price}
+        return {"suggested_price": suggested_price, "reasoning": suggested_price_text}
         
     except Exception as e:
         print(f"OpenAI API error: {e}")
         return _fallback_price_generation(data)
 
-def _fallback_price_generation(data: PriceGenerationRequest):
+def _fallback_price_generation(data: schemas.PriceGenerationRequest):
     """Fallback price generation algorithm when OpenAI is unavailable"""
     base_price = 50.0
     title_bonus = len(data.title) * 2
@@ -95,4 +104,4 @@ def _fallback_price_generation(data: PriceGenerationRequest):
     suggested_price = base_price + title_bonus + description_bonus
     suggested_price = round(suggested_price)
     
-    return {"suggested_price": suggested_price}
+    return {"suggested_price": suggested_price, "reasoning": "Currently unable to provide reasoning."}

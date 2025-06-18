@@ -77,7 +77,7 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
 def login_with_google(data: GoogleToken, db: Session = Depends(get_db)):
     token = data.token
     try:
-        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), "89565253405-34qjj05nvt5tshoeseu2u733af7n1cin.apps.googleusercontent.com")
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), "89565253405-se6bp162e4s5do2ei6nk2ip064kmjp77.apps.googleusercontent.com")
         email = idinfo['email']
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid token")

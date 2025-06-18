@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 import {useNavigate} from 'react-router-dom';
 
@@ -13,7 +13,7 @@ const LoginPage = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("http://localhost:8000/auth/login", {
+      const res = await api.post("/auth/login", {
         email,
         password
       });
@@ -31,7 +31,7 @@ const LoginPage = () => {
       <h2 className="text-2xl font-bold text-center">Login</h2>
       <form onSubmit={handleLogin} className="flex flex-col gap-3">
         <input
-          className="input input-bordered"
+          className="input input-bordered w-full"
           type="email"
           placeholder="Email"
           value={email}
@@ -39,19 +39,21 @@ const LoginPage = () => {
           required
         />
         <input
-          className="input input-bordered"
+          className="input input-bordered w-full"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" className="btn btn-primary">Login</button>
+        <button type="submit" className="btn btn-primary w-full">Login</button>
         {error && <p className="text-red-500 text-sm">{error}</p>}
       </form>
 
       <div className="divider">OR</div>
-      <GoogleLoginButton/>
+      <div className="flex justify-center">
+        <GoogleLoginButton/>
+      </div>
 
 
     </div>

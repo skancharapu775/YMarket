@@ -2,21 +2,18 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Package, CheckCircle, DollarSign, TrendingUp } from 'lucide-react';
-import axios from 'axios'
+import api from '../utils/api';
 
 export default function SellerDashboard() {
   const [unsoldListings, setUnsoldListings] = useState([]);
   const token = localStorage.getItem("token");
-    useEffect(() => {
-        fetch("http://localhost:8000/listings/my-unsold", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((res) => res.json())
-          .then((data) => setUnsoldListings(data))
-          .catch((err) => console.error("Failed to fetch listings", err));
-    }, []);
+  
+  useEffect(() => {
+    api.get("/listings/my-unsold")
+      .then((res) => setUnsoldListings(res.data))
+      .catch((err) => console.error("Failed to fetch listings", err));
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">

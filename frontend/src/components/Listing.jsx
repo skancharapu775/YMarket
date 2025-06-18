@@ -1,5 +1,6 @@
 // Listing. Singular on landing page. 
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Listing = ({item}) => {
   return (
@@ -19,7 +20,9 @@ const Listing = ({item}) => {
         {/* Description */}
         <div className="flex flex-col justify-between flex-grow">
           <div>
-            <h2 className="text-xl font-bold hover:text-blue-500 cursor-pointer transition-colors duration-100">{item.title}</h2>
+            <Link to={`/listing/${item.id}`}>
+              <h2 className="text-xl font-bold hover:text-blue-500 cursor-pointer transition-colors duration-100">{item.title}</h2>
+            </Link>
             <p className="text-sm text-base-content/70">{item.condition} · {item.category}</p>
             <p className="text-sm mt-1 line-clamp-2">{item.description}</p>
           </div>

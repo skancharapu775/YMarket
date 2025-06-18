@@ -43,7 +43,7 @@ const PostListingPage = () => {
         description,
       });
       alert("Listing posted!");
-      navigate("/listings");
+      navigate("/seller-dashboard");
     } catch (err) {
       console.error("Error posting listing:", err);
       alert("Failed to post listing. Please try again.");

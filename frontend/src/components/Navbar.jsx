@@ -5,7 +5,7 @@ function Navbar() {
     return (
         <header
           className="border-b border-base-300 fixed w-full top-0 z-50  h-18
-        backdrop-blur-lg bg-base-100/80 pb-10"
+        backdrop-blur-lg bg-slate-900 pb-10"
         >
           <div className="container mx-auto px-4 h-16">
             <div className="flex items-center justify-between h-full">
@@ -15,7 +15,7 @@ function Navbar() {
                   <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Store className="w-6 h-6 text-blue-700" />
                   </div>
-                  <h1 className="text-lg font-bold">yMarkets</h1>
+                  <h1 className="text-lg font-bold text-white">yMarket</h1>
                 </Link>
               </div>
 
@@ -23,13 +23,13 @@ function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                     to="/"
-                    className="btn btn-sm btn-outline normal-case"
+                    className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
                   >
                     Items
                 </Link>
                 <Link
-                    to="/dashboard"
-                    className="btn btn-sm btn-outline normal-case"
+                    to="/seller-dashboard"
+                    className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
                   >
                     Seller Dashboard
                 </Link>
@@ -49,5 +49,4 @@ function Navbar() {
         </header>
   );
 }
-
 export default Navbar;

@@ -1,11 +1,11 @@
 import React from 'react'
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios'
+import {useNavigate} from 'react-router-dom';
 
 const GoogleLoginButton = () => {
-    const clientId = "89565253405-34qjj05nvt5tshoeseu2u733af7n1cin.apps.googleusercontent.com";
+    const navigate = useNavigate();
   return (
-    <GoogleOAuthProvider clientId={clientId}>
         <GoogleLogin
             onSuccess={async (credentialResponse) => {
                 const googleToken = credentialResponse.credential;
@@ -16,6 +16,7 @@ const GoogleLoginButton = () => {
                   const { access_token } = res.data;
                   // Store your own backend-issued JWT
                   localStorage.setItem("token", access_token);
+                  navigate("/");
                   console.log("Logged in with Google, token:", access_token);
                   // Optionally redirect user or update app state here
                 } catch (err) {
@@ -26,7 +27,6 @@ const GoogleLoginButton = () => {
             console.log("Login Failed");
             }}
         />
-    </GoogleOAuthProvider>
   )
 }
 

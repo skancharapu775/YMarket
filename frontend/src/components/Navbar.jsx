@@ -1,7 +1,17 @@
 import { Link } from "react-router-dom";
 import { Store } from 'lucide-react';
+import { useState, useEffect } from "react";
 
 function Navbar() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setIsLoggedIn(true); // true if token exists
+      }
+      
+    }, []);
     return (
         <header
           className="border-b border-base-300 fixed w-full top-0 z-50  h-18
@@ -37,12 +47,16 @@ function Navbar() {
 
               {/* Right Side: Login Button */}
               <div className="flex items-center gap-3">
-                <Link
+                {!isLoggedIn ? (
+                    <Link
                     to="/login"
                     className="btn btn-sm btn-primary normal-case"
-                  >
-                    Login
-                </Link>
+                    >
+                        Login
+                    </Link>
+                ) : (
+                    <div/>
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 # app/schemas.py
-
+from typing import Optional
 from pydantic import BaseModel
 
 class ListingCreate(BaseModel):
@@ -12,3 +12,9 @@ class ListingOut(BaseModel):
     title: str
     description: str
     asking_price: float
+    ai_low: Optional[float]
+    ai_high: Optional[float]
+
+class PriceGenerationRequest(BaseModel):
+    title: str
+    description: str

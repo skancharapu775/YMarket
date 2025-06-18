@@ -3,10 +3,15 @@ import React from 'react'
 
 const Listing = ({item}) => {
   return (
-    <div className="card card-side bg-base-300 shadow-md my-5">
+    <div className="card card-side bg-base-300 shadow-md my-6 px-3 rounded-2xl">
       {/* Image */}
       <figure className="w-32 h-32 overflow-hidden">
-        <img src={item.image || "https://via.placeholder.com/100"} alt={item.title} className="object-cover w-full h-full" />
+        {item.image 
+        ? (<img src={item.image || "https://via.placeholder.com/100"} alt={item.title} className="object-cover w-full h-full" />) 
+        : (<div className='w-25 h-25 flex bg-base-100 items-center justify-center rounded-xl '>
+            <p className="text-sm text-base-content line-clamp-2 ml-4">No image available.</p>
+            </div>)}
+        
       </figure>
 
       {/* Main content */}
@@ -23,9 +28,9 @@ const Listing = ({item}) => {
         {/* AI Price Summary */}
         <div className="flex flex-col items-end ml-4 min-w-[120px] text-right">
           <p className="font-bold text-lg text-success">${item.asking_price}</p>
-          {item.aiLow != null && item.aiHigh != null ? (
+          {item.ai_low != null && item.ai_high != null ? (
             <div className="badge badge-info mt-1">
-              Est. ${item.aiLow} – ${item.aiHigh}
+              Est. ${item.ai_low} – ${item.ai_high}
             </div>
           ) : (
             <div className="badge badge-info mt-1">Est. N/A</div>

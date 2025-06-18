@@ -9,16 +9,16 @@ import ListingDetail from './pages/ListingDetail.jsx'
 import SellerDashboard from './pages/SellerDashboard.jsx'
 import LoginPage from './pages/LoginPage';
 import PostListingPage from './pages/PostListing.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 function App() {
   return (
     <div className='pt-18'>
       <Routes>
         <Route path="/" element={<ListingsPage />} />
-        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+        <Route path="/seller-dashboard" element={<ProtectedRoute child={<SellerDashboard /> }></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/post-listing" element={<PostListingPage/>}></Route>
-        <Route path="/listing" element={<ListingsPage/>}></Route>
+        <Route path="/post-listing" element={<ProtectedRoute child={<PostListingPage/>}></ProtectedRoute>}></Route>
         <Route path="/listing/:id" element={<ListingDetail />} />
       </Routes>
     </div>

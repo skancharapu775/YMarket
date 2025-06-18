@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app import models
 from jose import jwt, JWTError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -98,7 +98,7 @@ def login_with_google(data: GoogleToken, db: Session = Depends(get_db)):
 def create_token(email: str):
     payload = {
         "sub": email,
-        "exp": datetime.utcnow() + timedelta(hours=1)
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1)
     }
     token = jwt.encode(payload, SECRET, algorithm=ALGORITHM)
     return {"access_token": token}

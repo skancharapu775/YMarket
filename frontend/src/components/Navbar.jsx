@@ -1,23 +1,26 @@
 import { Link } from "react-router-dom";
-import { Store } from 'lucide-react';
+import { Store, CircleUser } from 'lucide-react';
 import { useState, useEffect } from "react";
 
 function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        setIsLoggedIn(true); // true if token exists
-      }
-      
+        const token = localStorage.getItem("token");
+        setIsLoggedIn(!!token);
+        const interval = setInterval(() => {
+            const token = localStorage.getItem("token");
+            setIsLoggedIn(!!token);  // Updates if token appears/disappears
+          }, 1000); // check every 1 second
+        
+          return () => clearInterval(interval); // cleanup on unmount
     }, []);
     return (
         <header
-          className="border-b border-base-300 fixed w-full top-0 z-50  h-18
-        backdrop-blur-lg bg-slate-900 pb-10"
+          className="border-b border-base-300 fixed w-full top-0 z-50  h-19
+        backdrop-blur-lg bg-slate-900"
         >
-          <div className="container mx-auto px-4 h-16">
+          <div className="container mx-auto px-4 h-18">
             <div className="flex items-center justify-between h-full">
               {/* Left Side: Logo */}
               <div className="flex items-center gap-4">
@@ -33,15 +36,15 @@ function Navbar() {
               <div className="flex items-center gap-4">
                 <Link
                     to="/"
-                    className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
                   >
                     Items
                 </Link>
                 <Link
                     to="/seller-dashboard"
-                    className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
                   >
-                    Seller Dashboard
+                    Sell an Item
                 </Link>
               </div>
 
@@ -50,12 +53,18 @@ function Navbar() {
                 {!isLoggedIn ? (
                     <Link
                     to="/login"
-                    className="btn btn-sm btn-primary normal-case"
+                    className="btn btn-md btn-primary normal-case"
                     >
                         Login
                     </Link>
                 ) : (
-                    <div/>
+                    <Link
+                    to="/seller-dashboard"
+                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                    >
+                        <CircleUser className="w-6 h-6 text-blue-700" />
+                        Your Dashboard
+                    </Link>
                 )}
               </div>
             </div>

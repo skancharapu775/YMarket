@@ -30,3 +30,6 @@ class ListingOut(BaseModel):
 class PriceGenerationRequest(BaseModel):
     title: str
     description: str
+
+class ContactLogRequest(BaseModel):
+    listing_id: int

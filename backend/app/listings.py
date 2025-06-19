@@ -89,6 +89,28 @@ async def create_listing(
     db.refresh(listing)
     return listing
 
+@router.post("/contact-log/")
+def create_contact_log(payload: schemas.ContactLogRequest, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+    existing = db.query(models.ContactLog).filter_by(user_id=current_user.id, listing_id=payload.listing_id).first()
+    listing = db.query(models.Listing).filter_by(id=payload.listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    seller = db.query(models.User).filter_by(id=listing.owner_id).first()
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+    if existing:
+        return {"message": "Already contacted", "contact_email": seller.email, "contact_phone": seller.phone}
+
+    log = models.ContactLog(user_id=current_user.id, listing_id=payload.listing_id)
+    db.add(log)
+    db.commit()
+    return {"message": "Contact log saved", "contact_email": seller.email, "contact_phone": seller.phone}
+
+@router.get("/contact-log/{listing_id}")
+def get_interested_users(listing_id: int, db: Session = Depends(auth.get_db)):
+    logs = db.query(models.ContactLog).filter_by(listing_id=listing_id).all()
+    return [{"user_id": log.user_id, "email": log.user.email} for log in logs]
+
 @router.post("/generate_price")
 def generate_price(data: schemas.PriceGenerationRequest):
     try:

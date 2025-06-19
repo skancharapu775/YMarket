@@ -1,14 +1,52 @@
 // Listing. Singular on landing page. 
 import React from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 const Listing = ({item}) => {
   // Get the first image from the images array, or use a placeholder
+  const [sellerEmail, setSellerEmail] = useState("")
+  const [sellerPhone, setSellerPhone] = useState("")
   const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
   const imageUrl = firstImage ? `http://localhost:8000/uploads/${firstImage.filename}` : null;
+  const handleContactSeller = async (listingId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post("http://localhost:8000/listings/contact-log/", 
+        { listing_id: listingId},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      setSellerEmail(res.data["contact_email"]);
+      setSellerPhone(res.data["contact_phone"]);
+      document.getElementById('contact-info').showModal()
+    } catch (error) {
+      console.error("Error fetching contact info:", error);
+      setSellerEmail("Something went wrong.");
+      document.getElementById('contact-info').showModal();
+    }
+    
+  };
 
   return (
-    <div className="card card-side bg-base-300 shadow-sm my-6 rounded-2xl hover:shadow-lg transition-all duration-200">
+    <div className="card card-side bg-base-300 shadow-sm my-6  rounded-2xl hover:shadow-lg transition-all duration-200">
+      <dialog id="contact-info" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Seller's contact details!</h3>
+          <p className="py-4">Email: {sellerEmail}</p>
+          <p className="py-4">Phone: {sellerPhone === "" ? ("Not available.") : sellerPhone}</p>
+          <div className="modal-action">
+            <form method="dialog">
+              {/* if there is a button in form, it will close the modal */}
+              <button className="btn">Close</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
       {/* Image */}
       <figure className="w-32 h-32 overflow-hidden rounded-l-2xl">
         {imageUrl 
@@ -43,7 +81,15 @@ const Listing = ({item}) => {
             <div className="badge badge-info mt-1">Est. N/A</div>
           )}
           <p className="text-xs text-base-content/70 mt-1">AI estimate</p>
+          <button 
+            className="btn btn-sm btn-outline btn-info mt-2"
+            onClick={() => handleContactSeller(item.id)}
+          >
+            Contact Seller
+          </button>
         </div>
+
+        
       </div>
     </div>
   )

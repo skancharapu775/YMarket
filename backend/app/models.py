@@ -61,6 +61,7 @@ class Listing(Base):
     asking_price = Column(Float)
     ai_low = Column(Float)
     ai_high = Column(Float)
+    ai_reasoning = Column(String)
     sold = Column(Boolean, default=False)
 
     owner_id = Column(Integer, ForeignKey("users.id"))

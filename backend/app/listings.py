@@ -6,6 +6,7 @@ from openai import OpenAI
 import os
 import shutil
 from pathlib import Path
+import re
 
 
 router = APIRouter()
@@ -45,6 +46,8 @@ async def create_listing(
         ai_input = schemas.PriceGenerationRequest(title=title, description=description)
         result = generate_price(ai_input)
         price = result["suggested_price"]
+        reasoning = result["reasoning"]
+        print(reasoning)
         spread = 5/100 * price
         ai_low = max(price - spread, 0)
         ai_high = price + spread
@@ -60,7 +63,8 @@ async def create_listing(
         asking_price=asking_price,
         owner_id=current_user.id,
         ai_low=ai_low,
-        ai_high=ai_high
+        ai_high=ai_high,
+        ai_reasoning=reasoning
     )
     db.add(listing)
     db.flush()  # Get the listing ID
@@ -89,6 +93,8 @@ async def create_listing(
     db.refresh(listing)
     return listing
 
+# the next functions are for purchase functionality
+
 @router.post("/contact-log/")
 def create_contact_log(payload: schemas.ContactLogRequest, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
     existing = db.query(models.ContactLog).filter_by(user_id=current_user.id, listing_id=payload.listing_id).first()
@@ -111,6 +117,43 @@ def get_interested_users(listing_id: int, db: Session = Depends(auth.get_db)):
     logs = db.query(models.ContactLog).filter_by(listing_id=listing_id).all()
     return [{"user_id": log.user_id, "email": log.user.email} for log in logs]
 
+@router.post("/transactions/complete")
+def complete_transaction(
+    payload: schemas.CompleteTransactionRequest,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    listing = db.query(models.Listing).filter_by(id=payload.listing_id).first()
+    if not listing or listing.sold:
+        raise HTTPException(400, "Listing not found or already sold")
+
+    # Figure out buyer
+    buyer_id = payload.buyer_id
+    if not buyer_id and payload.buyer_email:
+        buyer = db.query(models.User).filter_by(email=payload.buyer_email).first()
+        if not buyer:
+            raise HTTPException(404, "Buyer not found by email")
+        buyer_id = buyer.id
+
+    if not buyer_id:
+        raise HTTPException(400, "No buyer specified")
+
+    transaction = models.Transaction(
+        listing_id=payload.listing_id,
+        buyer_id=buyer_id,
+        seller_id=current_user.id,
+        amount_received=payload.amount_received,
+        status="finished"
+    )
+    listing.sold = True
+
+    db.add(transaction)
+    db.commit()
+
+    return {"message": "Transaction completed"}
+
+# AI Features below. 
+
 @router.post("/generate_price")
 def generate_price(data: schemas.PriceGenerationRequest):
     try:
@@ -125,7 +168,7 @@ def generate_price(data: schemas.PriceGenerationRequest):
         
         # Create a prompt for price generation
         prompt = f"""
-        Based on the following item listing, suggest a reasonable asking price in USD.
+        Based on the following item listing, suggest a reasonable asking price in USD and explain your reasoning in 2 very concise sentences.
         
         Title: {data.title}
         Description: {data.description}
@@ -136,7 +179,9 @@ def generate_price(data: schemas.PriceGenerationRequest):
         - Market value for similar items
         - Any unique features mentioned
         
-        Respond with only a number representing the suggested price in USD (no currency symbol, no explanation).
+        Format your response like this:
+        Price: [number only, no $ symbol]
+        Reason: [short paragraph, two to four sentences]
         """
         
         # Make OpenAI API call using the new syntax
@@ -146,20 +191,23 @@ def generate_price(data: schemas.PriceGenerationRequest):
                 {"role": "system", "content": "You are a pricing expert. Provide only numerical price suggestions in USD."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=10,
+            max_tokens=80,
             temperature=0.3
         )
         
         # Extract the suggested price from the response
-        suggested_price_text = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
         
-        # Clean up the response and convert to float
-        suggested_price = float(''.join(filter(str.isdigit, suggested_price_text)))
+        price_match = re.search(r"Price:\s*([\d.]+)", content)
+        reason_match = re.search(r"Reason:\s*(.+)", content, re.DOTALL)
+
+        if not price_match or not reason_match:
+            raise ValueError("OpenAI response did not match expected format.")
+
+        suggested_price = round(float(price_match.group(1)))
+        reasoning = reason_match.group(1).strip()
         
-        # Round to nearest dollar
-        suggested_price = round(suggested_price)
-        
-        return {"suggested_price": suggested_price, "reasoning": suggested_price_text}
+        return {"suggested_price": suggested_price, "reasoning": reasoning}
         
     except Exception as e:
         print(f"OpenAI API error: {e}")

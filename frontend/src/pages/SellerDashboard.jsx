@@ -1,8 +1,9 @@
-import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { Package, CheckCircle, DollarSign, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { Package, CheckCircle, DollarSign, TrendingUp, Plus } from 'lucide-react';
 import api from '../utils/api';
+import UnsoldListing from "../components/UnsoldListing";
+import axios from 'axios';
 
 export default function SellerDashboard() {
   const [unsoldListings, setUnsoldListings] = useState([]);
@@ -13,6 +14,30 @@ export default function SellerDashboard() {
     ai_savings: 0
   });
   const [loading, setLoading] = useState(true);
+  const [interestedUsers, setInterestedUsers] = useState([]);
+  const [manualEmail, setManualEmail] = useState("");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const currentListingIdRef = useRef(null);
+  const selectedUserIdRef = useRef(null);
+
+  const submitMarkAsSold = async () => {
+    const token = localStorage.getItem("token");
+    await axios.post(
+      "http://localhost:8000/listings/transactions/complete",
+      {
+        listing_id: currentListingIdRef.current,
+        amount_received: parseFloat(amountReceived),
+        buyer_id: selectedUserId || null,
+        buyer_email: manualEmail || null
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    alert("Transaction recorded!");
+    document.getElementById("mark-as-sold-modal").close();
+  };
+  
+  
   const token = localStorage.getItem("token");
   
   useEffect(() => {
@@ -51,6 +76,45 @@ export default function SellerDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <dialog id="mark-as-sold-modal" className="modal">
+            <div className="modal-box">
+                <h3 className="font-bold text-lg">Mark as Sold</h3>
+
+                <label className="label">Select buyer</label>
+                <select
+                className="select select-bordered w-full"
+                value={selectedUserId || ""}
+                onChange={(e) => setSelectedUserId(parseInt(e.target.value))}
+                >
+                <option value="">-- Select from interested buyers --</option>
+                {interestedUsers.map((u) => (
+                    <option key={u.user_id} value={u.user_id}>{u.email}</option>
+                ))}
+                </select>
+
+                <label className="label mt-2">Or enter buyer's email manually</label>
+                <input
+                type="email"
+                className="input input-bordered w-full"
+                value={manualEmail}
+                onChange={(e) => setManualEmail(e.target.value)}
+                />
+
+                <label className="label mt-2">Amount Received</label>
+                <input
+                type="number"
+                step="0.01"
+                className="input input-bordered w-full"
+                value={amountReceived}
+                onChange={(e) => setAmountReceived(e.target.value)}
+                />
+
+                <div className="modal-action">
+                <button className="btn" onClick={submitMarkAsSold}>Submit</button>
+                <form method="dialog"><button className="btn">Cancel</button></form>
+                </div>
+            </div>
+        </dialog>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Link
@@ -89,7 +153,7 @@ export default function SellerDashboard() {
               </li>
               <li className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-purple-500" />
-                AI Savings for buyers: <span className="font-medium">${userStats.ai_savings}</span>
+                Buying Savings: <span className="font-medium">${userStats.ai_savings}</span>
               </li>
             </ul>
           )}
@@ -102,29 +166,15 @@ export default function SellerDashboard() {
             <p className="text-sm text-gray-400">No unsold listings yet.</p>
           ) : (
             unsoldListings.map((item) => (
-              <div
-                key={item.id}
-                className="bg-base-200 rounded-xl p-4 shadow flex justify-between items-center"
-              >
-                <div>
-                  <h3 className="font-medium text-white">{item.title}</h3>
-                  <p className="text-sm text-base-content/70">${item.asking_price}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Link
-                    to={`/edit/${item.id}`}
-                    className="btn btn-sm btn-outline"
-                  >
-                    Edit
-                  </Link>
-                  <button 
-                    className="btn btn-sm btn-error"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+              <UnsoldListing 
+                item={item}
+                currentListingIdRef={currentListingIdRef}
+                setInterestedUsers={setInterestedUsers}
+                setAmountReceived={setAmountReceived} 
+                setManualEmail={setManualEmail}
+                SelectedUserId={selectedUserId}
+                setSelectedUserId={setSelectedUserId}
+              />
             ))
           )}
         </div>

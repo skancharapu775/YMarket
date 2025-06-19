@@ -44,7 +44,7 @@ function Navbar() {
                       Items
                   </Link>
                   <Link
-                      to="/seller-dashboard"
+                      to={!isLoggedIn ? ("/seller-dashboard") : ("/post-listing")}
                       className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
                     >
                       Sell an Item

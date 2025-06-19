@@ -1,5 +1,5 @@
 # app/schemas.py
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 class ListingCreate(BaseModel):
@@ -12,6 +12,11 @@ class ListingUpdate(BaseModel):
     description: Optional[str] = None
     asking_price: Optional[float] = None
 
+class ListingImageOut(BaseModel):
+    id: int
+    filename: str
+    file_path: str
+
 class ListingOut(BaseModel):
     id: int
     title: str
@@ -20,6 +25,7 @@ class ListingOut(BaseModel):
     ai_low: Optional[float]
     ai_high: Optional[float]
     sold: bool
+    images: List[ListingImageOut] = []
 
 class PriceGenerationRequest(BaseModel):
     title: str

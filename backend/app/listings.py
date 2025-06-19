@@ -1,12 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app import models, auth, schemas
 from typing import List
 from openai import OpenAI
 import os
+import shutil
+from pathlib import Path
 
 
 router = APIRouter()
+
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 @router.get("/get", response_model=List[schemas.ListingOut])
@@ -27,9 +33,16 @@ def get_listing(listing_id: int, db: Session = Depends(auth.get_db)):
     return listing
 
 @router.post("/submit")
-def create_listing(data: schemas.ListingCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+async def create_listing(
+    title: str = Form(...),
+    description: str = Form(...),
+    asking_price: float = Form(...),
+    images: List[UploadFile] = File(...),
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(auth.get_db)
+):
     try:
-        ai_input = schemas.PriceGenerationRequest(title=data.title, description=data.description)
+        ai_input = schemas.PriceGenerationRequest(title=title, description=description)
         result = generate_price(ai_input)
         price = result["suggested_price"]
         spread = 5/100 * price
@@ -40,15 +53,38 @@ def create_listing(data: schemas.ListingCreate, current_user: models.User = Depe
         ai_low = None
         ai_high = None
 
+    # Create the listing
     listing = models.Listing(
-        title=data.title,
-        description=data.description,
-        asking_price=data.asking_price,
+        title=title,
+        description=description,
+        asking_price=asking_price,
         owner_id=current_user.id,
         ai_low=ai_low,
         ai_high=ai_high
     )
     db.add(listing)
+    db.flush()  # Get the listing ID
+    
+    # Save uploaded images
+    for image_file in images:
+        if image_file.content_type.startswith('image/'):
+            # Create unique filename
+            file_extension = Path(image_file.filename).suffix
+            unique_filename = f"{listing.id}_{len(listing.images)}_{os.urandom(8).hex()}{file_extension}"
+            file_path = UPLOAD_DIR / unique_filename
+            
+            # Save file to disk
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(image_file.file, buffer)
+            
+            # Save image record to database
+            db_image = models.ListingImage(
+                filename=unique_filename,
+                file_path=str(file_path),
+                listing_id=listing.id
+            )
+            db.add(db_image)
+    
     db.commit()
     db.refresh(listing)
     return listing
@@ -167,3 +203,31 @@ def update_listing(listing_id: int, data: schemas.ListingUpdate, current_user: m
     db.commit()
     db.refresh(listing)
     return listing
+
+@router.get("/stats/user")
+def get_user_stats(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+    # Get all listings for the current user
+    user_listings = db.query(models.Listing).filter(models.Listing.owner_id == current_user.id).all()
+    
+    # Calculate stats
+    total_listings = len(user_listings)
+    sold_listings = [listing for listing in user_listings if listing.sold]
+    items_sold = len(sold_listings)
+    
+    # Calculate total revenue from sold items
+    total_revenue = sum(listing.asking_price for listing in sold_listings)
+    
+    # Calculate AI savings (difference between AI suggested price and actual price)
+    ai_savings = 0
+    for listing in sold_listings:
+        if listing.ai_low and listing.ai_high:
+            ai_suggested_price = (listing.ai_low + listing.ai_high) / 2
+            if listing.asking_price < ai_suggested_price:
+                ai_savings += ai_suggested_price - listing.asking_price
+    
+    return {
+        "items_listed": total_listings,
+        "items_sold": items_sold,
+        "total_revenue": round(total_revenue, 2),
+        "ai_savings": round(ai_savings, 2)
+    }

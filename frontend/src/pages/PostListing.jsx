@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
+import { Upload, X } from 'lucide-react';
 
 const PostListingPage = () => {
   const [title, setTitle] = useState("");
   const [askingPrice, setAskingPrice] = useState("");
   const [description, setDescription] = useState("");
   const [isGeneratingPrice, setIsGeneratingPrice] = useState(false);
+  const [images, setImages] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   const handleGeneratePrice = async () => {
@@ -34,19 +39,95 @@ const PostListingPage = () => {
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    handleFiles(files);
+  };
+
+  const handleFiles = (files) => {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      alert('Please select only image files.');
+      return;
+    }
+
+    if (images.length + imageFiles.length > 5) {
+      alert('You can upload a maximum of 5 images.');
+      return;
+    }
+
+    const newImages = imageFiles.map(file => ({
+      file,
+      id: Date.now() + Math.random(),
+      preview: URL.createObjectURL(file)
+    }));
+
+    setImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (imageId) => {
+    setImages(prev => {
+      const imageToRemove = prev.find(img => img.id === imageId);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return prev.filter(img => img.id !== imageId);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (images.length === 0) {
+      alert("Please upload at least one image for your listing.");
+      return;
+    }
+
+    setIsUploading(true);
     try {
-      await api.post("/listings/submit", {
-        title,
-        asking_price: parseFloat(askingPrice),
-        description,
+      // Create FormData for multipart/form-data upload
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('asking_price', askingPrice);
+      formData.append('description', description);
+      
+      // Append each image file
+      images.forEach((image, index) => {
+        formData.append(`images`, image.file);
       });
-      alert("Listing posted!");
+
+      await api.post("/listings/submit", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      alert("Listing posted successfully!");
       navigate("/seller-dashboard");
     } catch (err) {
       console.error("Error posting listing:", err);
       alert("Failed to post listing. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -58,20 +139,85 @@ const PostListingPage = () => {
       
       <div className="flex justify-center items-start gap-12">
         {/* Image Upload Section */}
-        <div className="w-80 p-6 bg-slate-900 rounded-lg border-2 border-dashed border-slate-500">
-          <h3 className="text-lg font-semibold mb-4 text-white">Upload Images</h3>
-          <div className="text-center">
-            <div className="mb-4">
-              <svg className="mx-auto h-12 w-12 text-slate-300" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <p className="text-sm text-slate-300 mb-4">
-              Drag and drop images here, or click to select files
-            </p>
-            <button className="btn btn-sm btn-outline text-white border-white hover:bg-white hover:text-slate-900">
-              Choose Files
-            </button>
+        <div className="w-80">
+          <div 
+            className={`p-6 bg-slate-900 rounded-lg border-2 border-dashed transition-colors ${
+              isDragOver ? 'border-blue-400 bg-slate-800' : 'border-slate-500'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-white">Upload Images</h3>
+            
+            {images.length === 0 ? (
+              <div className="text-center">
+                <div className="mb-4">
+                  <Upload className="mx-auto h-12 w-12 text-slate-300" />
+                </div>
+                <p className="text-sm text-slate-300 mb-4">
+                  Drag and drop images here, or click to select files
+                </p>
+                <button 
+                  type="button"
+                  className="btn btn-sm btn-outline text-white border-white hover:bg-white hover:text-slate-900"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Choose Files
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-slate-300">
+                    {images.length}/5 images
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline text-white border-white hover:bg-white hover:text-slate-900"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Add More
+                  </button>
+                </div>
+                
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {images.map((image) => (
+                    <div key={image.id} className="relative group">
+                      <img
+                        src={image.preview}
+                        alt="Preview"
+                        className="w-full h-24 object-cover rounded border border-slate-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(image.id)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            )}
           </div>
         </div>
         
@@ -110,7 +256,13 @@ const PostListingPage = () => {
               >
                 {isGeneratingPrice ? 'Generating...' : 'Recomend Price'}
               </button>
-              <button className="btn btn-primary" type="submit">Post Listing</button>
+              <button 
+                className="btn btn-primary" 
+                type="submit"
+                disabled={isUploading}
+              >
+                {isUploading ? 'Posting...' : 'Post Listing'}
+              </button>
             </div>
           </form>
         </div>

@@ -3,14 +3,18 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 
 const Listing = ({item}) => {
+  // Get the first image from the images array, or use a placeholder
+  const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
+  const imageUrl = firstImage ? `http://localhost:8000/uploads/${firstImage.filename}` : null;
+
   return (
-    <div className="card card-side bg-base-300 shadow-sm my-6 px-3 rounded-2xl hover:shadow-lg transition-all duration-200">
+    <div className="card card-side bg-base-300 shadow-sm my-6 rounded-2xl hover:shadow-lg transition-all duration-200">
       {/* Image */}
-      <figure className="w-32 h-32 overflow-hidden">
-        {item.image 
-        ? (<img src={item.image || "https://via.placeholder.com/100"} alt={item.title} className="object-cover w-full h-full" />) 
-        : (<div className='w-25 h-25 flex bg-base-100 items-center justify-center rounded-xl '>
-            <p className="text-sm text-base-content line-clamp-2 ml-4">No image available.</p>
+      <figure className="w-32 h-32 overflow-hidden rounded-l-2xl">
+        {imageUrl 
+        ? (<img src={imageUrl} alt={item.title} className="object-cover w-full h-full" />) 
+        : (<div className='w-full h-full flex bg-base-100 items-center justify-center'>
+            <p className="text-sm text-base-content line-clamp-2 text-center px-2">No image available.</p>
             </div>)}
         
       </figure>

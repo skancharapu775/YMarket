@@ -25,7 +25,6 @@ class Listing(Base):
     description = Column(Text)
     category = Column(String)
     condition = Column(String)
-    image_url = Column(String)
     asking_price = Column(Float)
     ai_low = Column(Float)
     ai_high = Column(Float)
@@ -33,3 +32,14 @@ class Listing(Base):
 
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", backref="listings")
+    images = relationship("ListingImage", back_populates="listing", cascade="all, delete-orphan")
+
+
+class ListingImage(Base):
+    __tablename__ = "listing_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    listing = relationship("Listing", back_populates="images")

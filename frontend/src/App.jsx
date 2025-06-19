@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import PostListingPage from './pages/PostListing.jsx'
 import EditListing from './pages/EditListing.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import Register from './pages/RegisterAccount.jsx'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<Navigate to="/seller-dashboard" replace />} />
         <Route path="/seller-dashboard" element={<ProtectedRoute child={<SellerDashboard /> }></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/post-listing" element={<ProtectedRoute child={<PostListingPage/>}></ProtectedRoute>}></Route>
         <Route path="/listing/:id" element={<ListingDetail />} />
         <Route path="/edit/:listingId" element={<ProtectedRoute child={<EditListing />}></ProtectedRoute>} />

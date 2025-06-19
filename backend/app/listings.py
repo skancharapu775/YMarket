@@ -13,19 +13,18 @@ router = APIRouter()
 def get_listings(db: Session = Depends(auth.get_db)):
     return db.query(models.Listing).filter(models.Listing.sold == False).all()
 
-@router.get("/{listing_id}", response_model=schemas.ListingOut)
-def get_listing(listing_id: int, db: Session = Depends(auth.get_db)):
-    listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    return listing
-
 @router.get("/my-unsold", response_model=List[schemas.ListingOut], )
 def get_my_unsold_listings(db: Session = Depends(auth.get_db), current_user: models.User = Depends(auth.get_current_user)):
     return db.query(models.Listing).filter(
         models.Listing.owner_id == current_user.id,
         models.Listing.sold == False).all()
 
+@router.get("/{listing_id}", response_model=schemas.ListingOut)
+def get_listing(listing_id: int, db: Session = Depends(auth.get_db)):
+    listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return listing
 
 @router.post("/submit")
 def create_listing(data: schemas.ListingCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
@@ -118,3 +117,53 @@ def _fallback_price_generation(data: schemas.PriceGenerationRequest):
     suggested_price = round(suggested_price)
     
     return {"suggested_price": suggested_price, "reasoning": "Currently unable to provide reasoning."}
+
+@router.delete("/{listing_id}")
+def delete_listing(listing_id: int, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+    listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    if listing.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this listing")
+    
+    db.delete(listing)
+    db.commit()
+    return {"message": "Listing deleted successfully"}
+
+@router.put("/{listing_id}")
+def update_listing(listing_id: int, data: schemas.ListingUpdate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+    listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    if listing.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this listing")
+    
+    # Update the listing fields
+    if data.title is not None:
+        listing.title = data.title
+    if data.description is not None:
+        listing.description = data.description
+    if data.asking_price is not None:
+        listing.asking_price = data.asking_price
+    
+    # Regenerate AI pricing if title or description changed
+    if data.title is not None or data.description is not None:
+        try:
+            ai_input = schemas.PriceGenerationRequest(
+                title=data.title or listing.title, 
+                description=data.description or listing.description
+            )
+            result = generate_price(ai_input)
+            price = result["suggested_price"]
+            spread = 5/100 * price
+            listing.ai_low = max(price - spread, 0)
+            listing.ai_high = price + spread
+        except Exception as e:
+            print(f"AI pricing failed: {e}")
+            # Keep existing AI pricing if regeneration fails
+    
+    db.commit()
+    db.refresh(listing)
+    return listing

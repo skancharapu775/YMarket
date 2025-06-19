@@ -28,7 +28,7 @@ function Navbar() {
         >
           <div className="container mx-auto px-4 h-18">
             <div className="flex items-center justify-between h-full">
-              {/* Left Side: Logo */}
+              {/* Left Side: Logo and Navigation */}
               <div className="flex items-center gap-4">
                 <Link to="/" className="flex items-center gap-2.5 hover:opacity-70 transition-all">
                   <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -36,22 +36,20 @@ function Navbar() {
                   </div>
                   <h1 className="text-lg font-bold text-white">yMarket</h1>
                 </Link>
-              </div>
-
-              {/* Center: Navigation Buttons */}
-              <div className="flex items-center gap-4">
-                <Link
-                    to="/"
-                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
-                  >
-                    Items
-                </Link>
-                <Link
-                    to="/seller-dashboard"
-                    className="btn btn-md btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
-                  >
-                    Sell an Item
-                </Link>
+                <div className="flex items-center gap-4">
+                  <Link
+                      to="/"
+                      className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                    >
+                      Items
+                  </Link>
+                  <Link
+                      to="/seller-dashboard"
+                      className="btn btn-sm btn-outline normal-case text-white border-white hover:bg-white hover:text-slate-900"
+                    >
+                      Sell an Item
+                  </Link>
+                </div>
               </div>
 
               {/* Right Side: Login Button */}

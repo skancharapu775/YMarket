@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, User, WandSparkles, TriangleAlert } from 'lucide-react';
 import api from '../utils/api';
+import axios from 'axios';
 
 const ListingDetail = () => {
   const { id } = useParams();
@@ -10,6 +11,29 @@ const ListingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [sellerEmail, setSellerEmail] = useState("");
+  const [sellerPhone, setSellerPhone] = useState("");
+
+  const handleContactSeller = async (listingId) => {
+        try {
+        const token = localStorage.getItem("token");
+        const res = await axios.post("http://localhost:8000/listings/contact-log/", 
+            { listing_id: listingId},
+            {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+            }
+        );
+        setSellerEmail(res.data["contact_email"]);
+        setSellerPhone(res.data["contact_phone"]);
+        document.getElementById('contact-info').showModal()
+        } catch (error) {
+        console.error("Error fetching contact info:", error);
+        setSellerEmail("Something went wrong.");
+        document.getElementById('contact-info').showModal();
+        }
+    }
 
   useEffect(() => {
     // Check if user is logged in
@@ -39,15 +63,15 @@ const ListingDetail = () => {
     
   }, [id]);
 
-  const handleMessageSeller = () => {
-    if (!isLoggedIn) {
-      alert('Please log in to message the seller');
-      navigate('/login');
-      return;
-    }
-    // TODO: Implement messaging functionality
-    alert('Messaging feature coming soon!');
-  };
+//   const handleMessageSeller = () => {
+//     if (!isLoggedIn) {
+//       alert('Please log in to message the seller');
+//       navigate('/login');
+//       return;
+//     }
+//     // TODO: Implement messaging functionality
+//     alert('Messaging feature coming soon!');
+//   };
 
   const handleBack = () => {
     navigate(-1);
@@ -95,6 +119,19 @@ const ListingDetail = () => {
 
   return (
     <div className="flex max-w-6xl mx-auto p-4 mt-6 gap-4">
+        <dialog id="contact-info" className="modal">
+            <div className="modal-box">
+            <h3 className="font-bold text-lg">Seller's contact details!</h3>
+            <p className="py-4">Email: {sellerEmail}</p>
+            <p className="py-4">Phone: {sellerPhone === "" ? ("Not available.") : sellerPhone}</p>
+            <div className="modal-action">
+                <form method="dialog">
+                {/* if there is a button in form, it will close the modal */}
+                <button className="btn">Close</button>
+                </form>
+            </div>
+            </div>
+      </dialog>
       {/* Back Button */}
       <button 
         onClick={handleBack}
@@ -171,12 +208,12 @@ const ListingDetail = () => {
           {/* Action Buttons */}
           <div className="border-t pt-4 flex gap-4">
             <button 
-              onClick={handleMessageSeller}
+              onClick={() => handleContactSeller(listing.id)}
               className="btn btn-primary flex-1"
               disabled={listing.sold}
             >
               <MessageCircle className="w-4 h-4 mr-2" />
-              {listing.sold ? 'Item Sold' : 'Message Seller'}
+              {listing.sold ? 'Item Sold' : 'Interested? Contact the Seller'}
             </button>
             
             {!isLoggedIn && (

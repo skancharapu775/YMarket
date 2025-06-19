@@ -24,8 +24,10 @@ class ListingOut(BaseModel):
     asking_price: float
     ai_low: Optional[float]
     ai_high: Optional[float]
+    ai_reasoning: str
     sold: bool
     images: List[ListingImageOut] = []
+
 
 class PriceGenerationRequest(BaseModel):
     title: str
@@ -33,3 +35,9 @@ class PriceGenerationRequest(BaseModel):
 
 class ContactLogRequest(BaseModel):
     listing_id: int
+
+class CompleteTransactionRequest(BaseModel):
+    listing_id: int
+    amount_received: float
+    buyer_id: Optional[int] = None
+    buyer_email: Optional[str] = None

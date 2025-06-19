@@ -2,6 +2,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { WandSparkles } from 'lucide-react';
 import axios from 'axios'
 
 const Listing = ({item}) => {
@@ -71,16 +72,18 @@ const Listing = ({item}) => {
         </div>
 
         {/* AI Price Summary */}
-        <div className="flex flex-col items-end ml-4 min-w-[120px] text-right">
+        <div className="flex flex-col items-end ml-4 min-w-[150px] text-right">
           <p className="font-bold text-lg text-success">${item.asking_price}</p>
           {item.ai_low != null && item.ai_high != null ? (
-            <div className="badge badge-info mt-1">
+            <p className="badge badge-info whitespace-nowrap text-sm">
               Est. ${item.ai_low} – ${item.ai_high}
-            </div>
+            </p>
           ) : (
             <div className="badge badge-info mt-1">Est. N/A</div>
           )}
-          <p className="text-xs text-base-content/70 mt-1">AI estimate</p>
+          <p className="text-xs text-base-content/70 mt-1 inline-flex items-center gap-1"> 
+            <WandSparkles className='h-3 w-3'/>AI estimate
+          </p>
           <button 
             className="btn btn-sm btn-outline btn-info mt-2"
             onClick={() => handleContactSeller(item.id)}

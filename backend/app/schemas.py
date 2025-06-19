@@ -7,6 +7,11 @@ class ListingCreate(BaseModel):
     description: str
     asking_price: float
 
+class ListingUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    asking_price: Optional[float] = None
+
 class ListingOut(BaseModel):
     id: int
     title: str

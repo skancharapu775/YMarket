@@ -14,6 +14,21 @@ export default function SellerDashboard() {
       .catch((err) => console.error("Failed to fetch listings", err));
   }, []);
 
+  const handleDelete = async (listingId) => {
+    if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+      try {
+        await api.delete(`/listings/${listingId}`);
+        // Remove the deleted listing from the local state
+        setUnsoldListings(prevListings => 
+          prevListings.filter(listing => listing.id !== listingId)
+        );
+      } catch (error) {
+        console.error("Failed to delete listing:", error);
+        alert("Failed to delete listing. Please try again.");
+      }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -71,7 +86,12 @@ export default function SellerDashboard() {
                   >
                     Edit
                   </Link>
-                  <button className="btn btn-sm btn-error">Delete</button>
+                  <button 
+                    className="btn btn-sm btn-error"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))

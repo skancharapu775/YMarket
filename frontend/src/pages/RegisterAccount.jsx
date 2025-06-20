@@ -14,20 +14,30 @@ const Register = () => {
     e.preventDefault();
     if (password !== confirmPassword) {
         toast.error("Passwords do not match!");
-      return;
+        return;
     }
 
-    // TODO: Add registration API call here
-    await api.post("/auth/register", {
-        email,
-        password,
-      });
-    const token = localStorage.getItem("token");
-    if (token) {
+    try {
+        const response = await api.post("/auth/register", {
+            email,
+            password,
+        });
+        
+        // Store the token from the response
+        const { access_token } = response.data;
+        localStorage.setItem("token", access_token);
+        
         toast.success("Account successfully created!");
         setTimeout(() => {
-            navigate("/login")
-          }, 800);
+            navigate("/");
+        }, 800);
+    } catch (error) {
+        if (error.response?.data?.detail) {
+            toast.error(error.response.data.detail);
+        } else {
+            toast.error("Registration failed. Please try again.");
+        }
+        console.error("Registration error:", error);
     }
   };
 

@@ -145,12 +145,19 @@ const ListingDetail = () => {
       <div className="bg-base-100 rounded-xl shadow-lg overflow-hidden">
         {/* Image Section */}
         <div className="relative">
-          {listing.image ? (
-            <img 
-              src={listing.image} 
-              alt={listing.title} 
-              className="w-full h-96 object-cover"
-            />
+          {listing.images && listing.images.length > 0 ? (
+            <div className="relative">
+              <img 
+                src={`http://localhost:8000/uploads/${listing.images[0].filename}`}
+                alt={listing.title} 
+                className="w-full h-96 object-cover"
+              />
+              {listing.images.length > 1 && (
+                <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                  +{listing.images.length - 1} more
+                </div>
+              )}
+            </div>
           ) : (
             <div className="w-full h-96 bg-base-200 flex items-center justify-center">
               <div className="text-center">
@@ -169,7 +176,7 @@ const ListingDetail = () => {
               <h1 className="text-3xl font-bold mb-2">{listing.title}</h1>
               <div className="flex items-center gap-2 text-base-content/70">
                 <User className="w-4 h-4" />
-                <span>Seller ID: {listing.owner_id}</span>
+                <span>Listed by Seller #{listing.owner_id}</span>
               </div>
             </div>
             <div className="text-right">

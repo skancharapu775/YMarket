@@ -1,6 +1,7 @@
 # app/schemas.py
 from typing import Optional, List
 from pydantic import BaseModel
+from datetime import datetime
 
 class ListingCreate(BaseModel):
     title: str
@@ -22,10 +23,12 @@ class ListingOut(BaseModel):
     title: str
     description: str
     asking_price: float
+    owner_id: int
     ai_low: Optional[float]
     ai_high: Optional[float]
     ai_reasoning: str
     sold: bool
+    created_at: Optional[datetime] = None
     images: List[ListingImageOut] = []
 
 

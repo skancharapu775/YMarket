@@ -63,6 +63,7 @@ class Listing(Base):
     ai_high = Column(Float)
     ai_reasoning = Column(String)
     sold = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", backref="listings")

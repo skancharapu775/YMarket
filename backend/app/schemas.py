@@ -44,3 +44,14 @@ class CompleteTransactionRequest(BaseModel):
     amount_received: float
     buyer_id: Optional[int] = None
     buyer_email: Optional[str] = None
+
+class TransactionOut(BaseModel):
+    id: int
+    listing_id: int
+    buyer_id: int
+    seller_id: int
+    amount_received: float
+    status: str
+    timestamp: datetime
+    full_market_value: Optional[float] = None
+    savings_amount: Optional[float] = None

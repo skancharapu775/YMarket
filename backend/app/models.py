@@ -30,6 +30,8 @@ class Transaction(Base):
     seller_id = Column(Integer, ForeignKey("users.id"))
     amount_received = Column(Float)
     status = Column(String, default="finished")
+    full_market_value = Column(Float, nullable=True)
+    savings_amount = Column(Float, nullable=True)
 
     # Relationship
     buyer = relationship("User", foreign_keys=[buyer_id])

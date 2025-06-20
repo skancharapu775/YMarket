@@ -138,19 +138,34 @@ def complete_transaction(
     if not buyer_id:
         raise HTTPException(400, "No buyer specified")
 
+    # Calculate full market value and savings
+    full_market_value = calculate_full_market_value(
+        listing.title, 
+        listing.description, 
+        payload.amount_received
+    )
+    savings_amount = full_market_value - payload.amount_received
+
     transaction = models.Transaction(
         listing_id=payload.listing_id,
         buyer_id=buyer_id,
         seller_id=current_user.id,
         amount_received=payload.amount_received,
-        status="finished"
+        status="finished",
+        full_market_value=full_market_value,
+        savings_amount=savings_amount
     )
     listing.sold = True
 
     db.add(transaction)
     db.commit()
 
-    return {"message": "Transaction completed"}
+    return {
+        "message": "Transaction completed",
+        "full_market_value": full_market_value,
+        "savings_amount": savings_amount,
+        "savings_percentage": round((savings_amount / full_market_value) * 100, 1) if full_market_value > 0 else 0
+    }
 
 # AI Features below. 
 
@@ -223,6 +238,75 @@ def _fallback_price_generation(data: schemas.PriceGenerationRequest):
     suggested_price = round(suggested_price)
     
     return {"suggested_price": suggested_price, "reasoning": "Currently unable to provide reasoning."}
+
+def calculate_full_market_value(listing_title: str, listing_description: str, sold_price: float):
+    """Calculate the full market value of an item using ChatGPT"""
+    try:
+        # Get API key from environment variable
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("OPENAI_API_KEY environment variable not set")
+            return _fallback_market_value_calculation(sold_price)
+        
+        # Initialize OpenAI client
+        client = OpenAI(api_key=api_key)
+        
+        # Create a prompt for full market value calculation
+        prompt = f"""
+        Based on the following item that was sold for ${sold_price}, estimate the full market value this item would typically sell for in a retail store or at full price.
+        
+        Item: {listing_title}
+        Description: {listing_description}
+        Sold Price: ${sold_price}
+        
+        Please consider:
+        - The type of item and its typical retail value
+        - Condition and features mentioned
+        - Market demand for similar items
+        - Brand value if applicable
+        
+        IMPORTANT: Your estimate should be realistic and not exceed ${sold_price * 3} (maximum 200% more than sold price).
+        
+        Format your response like this:
+        Full Market Value: [number only, no $ symbol]
+        Reasoning: [brief explanation]
+        """
+        
+        # Make OpenAI API call
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a market value expert. Provide realistic full market value estimates."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=100,
+            temperature=0.3
+        )
+        
+        # Extract the full market value from the response
+        content = response.choices[0].message.content.strip()
+        
+        value_match = re.search(r"Full Market Value:\s*([\d.]+)", content)
+        if not value_match:
+            raise ValueError("OpenAI response did not match expected format.")
+
+        full_market_value = round(float(value_match.group(1)), 2)
+        
+        # Ensure the value doesn't exceed the maximum (200% more than sold price)
+        max_allowed = sold_price * 3
+        if full_market_value > max_allowed:
+            full_market_value = max_allowed
+        
+        return full_market_value
+        
+    except Exception as e:
+        print(f"OpenAI API error for market value calculation: {e}")
+        return _fallback_market_value_calculation(sold_price)
+
+def _fallback_market_value_calculation(sold_price: float):
+    """Fallback market value calculation when OpenAI is unavailable"""
+    # Simple fallback: assume 25% markup from sold price
+    return round(sold_price * 1.25, 2)
 
 @router.delete("/{listing_id}")
 def delete_listing(listing_id: int, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
@@ -300,4 +384,54 @@ def get_user_stats(current_user: models.User = Depends(auth.get_current_user), d
         "items_sold": items_sold,
         "total_revenue": round(total_revenue, 2),
         "ai_savings": round(ai_savings, 2)
+    }
+
+@router.get("/transactions/history")
+def get_transaction_history(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(auth.get_db)):
+    """Get transaction history for the current user (both as buyer and seller)"""
+    # Get transactions where user is buyer
+    buyer_transactions = db.query(models.Transaction).filter(
+        models.Transaction.buyer_id == current_user.id
+    ).all()
+    
+    # Get transactions where user is seller
+    seller_transactions = db.query(models.Transaction).filter(
+        models.Transaction.seller_id == current_user.id
+    ).all()
+    
+    buyer_history = []
+    for transaction in buyer_transactions:
+        listing = db.query(models.Listing).filter(models.Listing.id == transaction.listing_id).first()
+        buyer_history.append({
+            "transaction_id": transaction.id,
+            "listing_title": listing.title if listing else "Unknown Item",
+            "amount_paid": transaction.amount_received,
+            "full_market_value": transaction.full_market_value,
+            "savings_amount": transaction.savings_amount,
+            "savings_percentage": round((transaction.savings_amount / transaction.full_market_value) * 100, 1) if transaction.full_market_value else 0,
+            "date": transaction.timestamp,
+            "type": "purchase"
+        })
+    
+    seller_history = []
+    for transaction in seller_transactions:
+        listing = db.query(models.Listing).filter(models.Listing.id == transaction.listing_id).first()
+        seller_history.append({
+            "transaction_id": transaction.id,
+            "listing_title": listing.title if listing else "Unknown Item",
+            "amount_received": transaction.amount_received,
+            "full_market_value": transaction.full_market_value,
+            "savings_amount": transaction.savings_amount,
+            "date": transaction.timestamp,
+            "type": "sale"
+        })
+    
+    return {
+        "purchases": buyer_history,
+        "sales": seller_history,
+        "total_savings_as_buyer": sum(t.savings_amount for t in buyer_transactions if t.savings_amount),
+        "total_savings_percentage": round(
+            sum(t.savings_amount for t in buyer_transactions if t.savings_amount) / 
+            sum(t.full_market_value for t in buyer_transactions if t.full_market_value) * 100, 1
+        ) if sum(t.full_market_value for t in buyer_transactions if t.full_market_value) > 0 else 0
     }
